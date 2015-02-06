@@ -16,6 +16,9 @@ Home Page: https://bitbucket.org/emacsway/cache-tagging
 Usage with Django
 ==================
 
+Config
+------
+
 project settings.py::
 
     INSTALLED_APPS = (
@@ -24,10 +27,16 @@ project settings.py::
         # ...
     )
 
+    CACHE_TAGGING_SIGNALLING = True  # should we send signal when cache tags are manually invalidated?
+
 project urls.py::
 
     from cache_tagging.django_cache_tagging import autodiscover
     autodiscover()
+
+
+Example Usage
+-------------
 
 application example 1::
 
@@ -56,15 +65,21 @@ application example 2::
             'categories.category.pk:{0}'.format(obj.category_id),
         ))
 
-manual invalidation::
+manual invalidation
+-------------------
+
+``cache.invalidate_tags``::
 
     from cache_tagging.django_cache_tagging import cache
-    
+
     # ...
     cache.invalidate_tags('tag1', 'tag2', 'tag3')
     # or
     tag_list = ['tag1', 'tag2', 'tag3', ]
     cache.invalidate_tags(*tag_list)
+
+Ancestors tagging
+-----------------
 
 Ancestors automatically receive tags from their descendants.
 You do not have to worry about how to pass the tags from fragment's caches
@@ -104,8 +119,11 @@ You can turn off this logic::
         except Exception:
             cache.abort('cachename')
 
-appname.caches.py file::
-    
+appname.caches.py file
+----------------------
+
+Example::
+
     # Variant 1. Using registry.register().
     # Each item from list creates model's post_save and pre_delete signal.
     # Func takes changed model and returns list of tags.
@@ -143,6 +161,9 @@ appname.caches.py file::
     post_save.connect(invalidation_callback, sender=Post)
     pre_delete.connect(invalidation_callback, sender=Post)
 
+Usage in templates
+------------------
+
 template::
 
     {% load cache_tagging_tags %}
@@ -173,7 +194,10 @@ template::
         and context has attribute "request".
     {% endcomment %}
 
-`django-phased <https://github.com/codysoyland/django-phased>`_ support::
+django-phased  support
+----------------------
+
+`django-phased <https://github.com/codysoyland/django-phased>`_ is supported support::
 
     {% comment %}
         django-phased support https://github.com/codysoyland/django-phased
@@ -189,7 +213,10 @@ template::
         {% endphased %}
     {% end_cache_tagging %}
 
-nocache support::
+nocache support
+---------------
+
+Example::
 
     {% load cache_tagging_tags %}
     {% cache_tagging 'cache_name' 'categories.category.pk:15' 'blog.post' tags=tag_list_from_view timeout=3600 nocache=1 %}
@@ -209,7 +236,10 @@ nocache support::
         {% endnocache %}
     {% end_cache_tagging %}
 
-view decorator::
+view decorator
+--------------
+
+cache_page decorator::
 
     from cache_tagging.django_cache_tagging.decorators import cache_page
 
@@ -220,6 +250,9 @@ view decorator::
     def cached_view(request):
         result = get_result()
         return HttpResponse(result)
+
+Transactions and multithreading
+-------------------------------
 
 How about transaction and multithreading (multiprocessing)?::
 
@@ -268,6 +301,26 @@ Transaction handler as middleware::
         "django.middleware.transaction.TransactionMiddleware",
         # ...
     ]
+
+Signals
+-------
+
+cache_tagging.django_cache_tagging.signals.tag_invalidated
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Sent for each tag when cache tags are being *manually* invalidated.
+
+Arguments sent with this signal:
+
+``sender``
+    CacheTagging class
+
+``tag``
+    Tag beind invalidates
+
+``version``
+	Version passed in invalidate_tags function
 
 Forked from https://github.com/Harut/django-cachecontrol
 

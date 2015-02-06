@@ -158,11 +158,17 @@ class CacheTagging(object):
 
     def invalidate_tags(self, *tags, **kwargs):
         """Invalidate specified tags"""
+        from django.conf import settings
+        from cache_tagging.django_cache_tagging.signals import tag_invalidated
+
         if len(tags):
             version = kwargs.get('version', None)
             tags_prepared = list(map(tag_prepare_name, set(tags)))
             self.transaction.add_tags(tags_prepared, version=version)
             self.cache.delete_many(tags_prepared, version=version)
+            if getattr(settings, 'CACHE_TAGGING_SIGNALLING', False):
+                for tag in tags:
+                    tag_invalidated.send(sender=self.__class__, tag=tags, version=version)
 
     @property
     def ancestors(self):
