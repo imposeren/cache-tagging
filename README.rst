@@ -317,7 +317,7 @@ Arguments sent with this signal:
     CacheTagging class
 
 ``tag``
-    Tag beind invalidates
+    Tag being invalidates
 
 ``version``
 	Version passed in invalidate_tags function
